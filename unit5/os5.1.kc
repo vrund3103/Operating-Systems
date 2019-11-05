@@ -1,0 +1,734 @@
+// XMega65 Kernal Development Template
+// Each function of the kernal is a no-args function
+// The functions are placed in the SYSCALLS table surrounded by JMP and NOP
+
+#pragma cpu(rom6502)
+
+import "string"
+
+#pragma link("mega65hyper.ld")
+
+
+const char* RASTER = 0xd012;
+const char* VIC_MEMORY = 0xd018;
+const char* SCREEN = 0x0400;
+const char* BGCOL = 0xd021;
+const char* COLS = 0xd800;
+const char BLACK = 0;
+const char BLUE = 6;
+const char WHITE = 1;
+
+char[] MESSAGE = "checkpoint 5.1 josh0054";
+
+const unsigned char STATE_NOTRUNNING = $00;
+const unsigned char STATE_RUNNING = $01;
+void main(){
+}
+
+// Process Descriptor Block definition
+struct process_descriptor_block {
+  // Unique identifier for the process
+  unsigned char process_id;
+
+  // Current state of the process
+  unsigned char  process_state;
+
+  // Human readable name of the process
+  char*  process_name;
+  
+  // Where this process is stored when not running
+  // i.e., where in the $20000-$5FFFF memory range the
+  // process is stored when not running.
+  unsigned long storage_start_address;
+  unsigned long storage_end_address;
+ 
+  // Stored registers and related machine state for this
+  // process (for the $D640-$D67E machine state registers)
+  unsigned char* stored_state;
+  
+};
+
+// Process stored state will live at $C000-$C7FF, with 256 bytes
+// for each process reserved
+const unsigned char *stored_pdbs = $C000;
+// 8 processes x 16 bytes = 128 bytes for names
+const char *process_names = $C800;
+// 8 processes x 64 bytes context state = 512 bytes
+const unsigned char *process_context_states = $C900;
+
+
+volatile unsigned char *current_screen_line = SCREEN;
+volatile unsigned char current_screen_x = 0;
+
+void print_char(char c)
+{
+   current_screen_line[current_screen_x++]=c;
+}
+
+void print_to_screen(char *message)
+{
+  char *c=message;
+  while(*c) {
+    current_screen_line[current_screen_x++]=*c;
+    c++;
+  }
+}
+
+void print_newline()
+{
+  current_screen_line+=40;
+  current_screen_x=0;
+}
+
+
+void print_hex(unsigned word value)
+{
+  char[5] hex;
+  unsigned char i;
+  for(i=0;i<8;i++) {
+    if (value<0xa000) hex[i]='0'+(char)(value>>12);
+    else hex[i]=(char)(value>>12)-9;
+    value<<=4;
+  }
+  hex[4]=0;
+  print_to_screen(hex);
+}
+
+void print_dhex(unsigned dword value)
+{
+  print_hex((word)(value>>16));
+  print_hex((unsigned word)value);
+}
+
+void describe_pdb(unsigned char pdb_number)
+{
+  unsigned char i;
+  struct process_descriptor_block *p
+    =(struct process_descriptor_block *)(((unsigned short)stored_pdbs)+(((unsigned short)pdb_number)<<8));
+
+  print_to_screen("pdb#");
+  print_hex((word)pdb_number);
+  print_to_screen(":");
+  print_newline();
+
+  print_to_screen("  pid:          ");
+  print_hex((word)p->process_id);
+  print_newline();
+
+  print_to_screen("  process name: ");
+  char *n=p->process_name;
+  for(i=0;n[i]&&(i<17);i++) {
+    print_char(n[i]);
+  }
+  print_newline();
+
+  print_to_screen("  mem start:    $");
+  print_dhex(p->storage_start_address);
+  print_newline();
+
+  print_to_screen("  mem end:      $");
+  print_dhex(p->storage_end_address);
+  print_newline();
+
+  print_to_screen("  pc:           $");
+  unsigned short *ss=p->stored_state;
+  print_hex(ss[4]);
+  print_newline();
+
+
+}
+
+void RESET(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+	current_screen_x = 0;
+        char* msg = MESSAGE;
+        char* sc = SCREEN+40;
+         while(*msg){
+                      *sc++ = *msg++;
+                      }
+	print_to_screen("josh0054 operating system starting");
+
+	print_newline();
+	print_to_screen("testing hardware");
+         current_screen_line = SCREEN;
+    print_newline();
+    print_newline();
+    print_newline();
+    
+
+    describe_pdb(0);
+ 
+
+           while(true){if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+
+                      
+            }
+
+
+
+
+
+
+void PAGFAULT(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+
+
+
+
+void RESTORKEY(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+
+void ALTTABKEY(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+
+void VF011RD(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+
+void VF011RW(){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+
+void undefined_trap (){
+           *VIC_MEMORY = 0x14;
+           memset(SCREEN,' ',40*25);
+           memset(COLS,WHITE,40*25);
+           char* sc = SCREEN+40;
+           char* msg = MESSAGE;
+           
+           while(*msg){
+                      *sc++ = *msg++;
+                      }
+       
+           while(true){
+                      if(*RASTER==54 || *RASTER==66){
+                                                    *BGCOL = WHITE;
+                                                    }
+                                                else{
+                                                    *BGCOL = BLACK;
+                                                    }
+                      }
+            }
+void syscall00(){
+              *(SCREEN+79)='>';
+               exit_hypervisor();
+              }
+
+void syscall01(){
+               *(SCREEN+78)='<';
+                exit_hypervisor();
+               }
+
+void syscall02(){
+              *(SCREEN+79)='>';
+                exit_hypervisor();
+              }
+
+void syscall03(){
+               *(SCREEN+78)='<';
+                exit_hypervisor();
+               }
+
+void syscall04(){
+              *(SCREEN+79)='>';
+                exit_hypervisor();
+              }
+
+void syscall05(){
+               *(SCREEN+78)='<';
+                exit_hypervisor();
+               }
+void syscall06(){
+              *(SCREEN+79)='>';
+                exit_hypervisor();
+              }
+
+void syscall07(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall08(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall09(){
+               *(SCREEN+78)='<';
+exit_hypervisor();
+               }
+void syscall0A(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall0B(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall0C(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall0D(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall0E(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall0F(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall10(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void securentr(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void securexit(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall13(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall14(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall15(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall16(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall17(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall18(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall19(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall1A(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall1B(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall1C(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall1D(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall1E(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall1F(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall20(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall21(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall22(){
+              *(SCREEN+79)='>';
+exit_hypervisor();
+              }
+
+void syscall23(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall24(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall25(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall26(){
+              *(SCREEN+79)='>';
+exit_hypervisor();
+              }
+
+void syscall27(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall28(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall29(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall2A(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall2B(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall2C(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall2D(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall2E(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall2F(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall30(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall31(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall32(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall33(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall34(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall35(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall36(){
+              *(SCREEN+79)='>';
+exit_hypervisor();
+              }
+
+void syscall37(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall38(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall39(){
+               *(SCREEN+78)='<';
+exit_hypervisor();
+               }
+void syscall3A(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall3B(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall3C(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall3D(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+void syscall3E(){
+              *(SCREEN+79)='>';
+ exit_hypervisor();
+              }
+
+void syscall3F(){
+               *(SCREEN+78)='<';
+ exit_hypervisor();
+               }
+
+#pragma data_seg(Syscall)
+
+struct SysCall{
+              char xjmp;
+              void()* syscall;
+              char xnop;
+              };
+
+const char JMP = 0x4c;
+const char NOP = 0xea;
+
+export struct SysCall[] SYSCALLS = {
+        {JMP, &syscall00, NOP},
+        {JMP, &syscall01, NOP},
+        {JMP, &syscall02, NOP},
+        {JMP, &syscall03, NOP},
+        {JMP, &syscall04, NOP},
+        {JMP, &syscall05, NOP},
+        {JMP, &syscall06, NOP},
+        {JMP, &syscall07, NOP},
+        {JMP, &syscall08, NOP},
+        {JMP, &syscall09, NOP},
+        {JMP, &syscall0A, NOP},
+        {JMP, &syscall0B, NOP},
+        {JMP, &syscall0C, NOP},
+        {JMP, &syscall0D, NOP},
+        {JMP, &syscall0E, NOP},
+        {JMP, &syscall0F, NOP},
+        {JMP, &syscall10, NOP},
+        {JMP, &securentr, NOP},
+        {JMP, &securexit, NOP},
+        {JMP, &syscall13, NOP},
+        {JMP, &syscall14, NOP},
+        {JMP, &syscall15, NOP},
+        {JMP, &syscall16, NOP},
+        {JMP, &syscall17, NOP},
+        {JMP, &syscall18, NOP},
+        {JMP, &syscall19, NOP},
+        {JMP, &syscall1A, NOP},
+        {JMP, &syscall1B, NOP},
+        {JMP, &syscall1C, NOP},
+        {JMP, &syscall1D, NOP},
+        {JMP, &syscall1E, NOP},
+        {JMP, &syscall1F, NOP},
+        {JMP, &syscall20, NOP},
+        {JMP, &syscall21, NOP},
+        {JMP, &syscall22, NOP},
+        {JMP, &syscall23, NOP},
+        {JMP, &syscall24, NOP},
+        {JMP, &syscall25, NOP},
+        {JMP, &syscall26, NOP},
+        {JMP, &syscall27, NOP},
+        {JMP, &syscall28, NOP},
+        {JMP, &syscall29, NOP},
+        {JMP, &syscall2A, NOP},
+        {JMP, &syscall2B, NOP},
+        {JMP, &syscall2C, NOP},
+        {JMP, &syscall2D, NOP},
+        {JMP, &syscall2E, NOP},
+        {JMP, &syscall2F, NOP},
+        {JMP, &syscall30, NOP},
+        {JMP, &syscall31, NOP},
+        {JMP, &syscall32, NOP},
+        {JMP, &syscall33, NOP},
+        {JMP, &syscall34, NOP},
+        {JMP, &syscall35, NOP},
+        {JMP, &syscall36, NOP},
+        {JMP, &syscall37, NOP},
+        {JMP, &syscall38, NOP},
+        {JMP, &syscall39, NOP},
+        {JMP, &syscall3A, NOP},
+        {JMP, &syscall3B, NOP},
+        {JMP, &syscall3C, NOP},
+        {JMP, &syscall3D, NOP},
+        {JMP, &syscall3E, NOP},
+        {JMP, &syscall3F, NOP}
+                              };
+
+void exit_hypervisor()
+{
+     *(unsigned char *)$D67F = $01;
+}
+
+export align(0x100) struct SysCall[] TRAPS = {
+         {JMP,&RESET,NOP},
+         {JMP,&PAGFAULT,NOP},
+         {JMP,&RESTORKEY,NOP},
+         {JMP,&ALTTABKEY,NOP},
+         {JMP,&VF011RD,NOP},
+         {JMP,&VF011RW,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP},
+         {JMP,&undefined_trap,NOP}
+                                                     };
+
+   
+
